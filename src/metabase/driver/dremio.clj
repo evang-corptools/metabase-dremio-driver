@@ -94,9 +94,17 @@
 (defn- date-trunc [unit expr] (sql/call :date_trunc (h2x/literal unit) (h2x/->timestamp expr)))
 
 ;; Dremio doesnt have enums
-(defn- enum-types
-  [database]
-  #{})
+(defn- enum-types [_driver database]
+
+  (into #{}
+        (comp (mapcat get-typenames)
+              (map keyword))
+        (jdbc/query (sql-jdbc.conn/db->pooled-connection-spec database)
+                    [(str "SELECT nspname, typname "
+                          "FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace "
+                          "WHERE t.oid IN (SELECT DISTINCT enumtypid FROM pg_enum e)")])))
+
+(def ^:private ^:dynamic *enum-types* nil)
 
 (defmethod sql.qp/date [:dremio :week]
   [_ _ expr]
