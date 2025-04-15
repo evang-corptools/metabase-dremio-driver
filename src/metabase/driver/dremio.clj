@@ -93,6 +93,11 @@
 
 (defn- date-trunc [unit expr] (sql/call :date_trunc (h2x/literal unit) (h2x/->timestamp expr)))
 
+;; Dremio doesnt have enums
+(defn- enum-types
+  [database]
+  #{})
+
 (defmethod sql.qp/date [:dremio :week]
   [_ _ expr]
   (sql.qp/adjust-start-of-week :dremio (partial date-trunc :week) expr))
